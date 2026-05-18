@@ -267,7 +267,7 @@ export async function initQuizPage() {
         <h3>Question Load Failed</h3>
         <p>${message}</p>
         <div class="inline-actions">
-          <button type="button" class="btn" data-prequiz-action="retry-openrouter">
+          <button type="button" class="btn" data-prequiz-action="retry-generation">
             Try Again
           </button>
           <button type="button" class="btn btn-secondary" data-prequiz-action="use-mock">
@@ -288,8 +288,8 @@ export async function initQuizPage() {
         const action = target.getAttribute('data-prequiz-action');
         if (!action) return;
 
-        if (action === 'retry-openrouter') {
-          activeSource = 'openrouter';
+        if (action === 'retry-generation') {
+          activeSource = 'api';
         }
 
         if (action === 'use-mock') {
@@ -297,9 +297,7 @@ export async function initQuizPage() {
         }
 
         renderLoadingState(
-          activeSource === 'mock'
-            ? 'Preparing your practice set...'
-            : 'Building your AI practice set...'
+          activeSource === 'mock' ? 'Preparing your practice set...' : 'Building your AI practice set...'
         );
         renderAiStatusBanner();
 
@@ -332,7 +330,7 @@ export async function initQuizPage() {
 
   function getQuestionSourcePreference() {
     const queryParams = new URLSearchParams(window.location.search);
-    return queryParams.get('source') === 'practice' ? 'mock' : 'openrouter';
+    return queryParams.get('source') === 'practice' ? 'mock' : 'api';
   }
 
   async function submitQuizAndRedirect() {

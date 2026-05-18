@@ -1,18 +1,18 @@
 # AptiMaster - AI-Powered Aptitude Platform
 
-Professional, beginner-friendly frontend project built for portfolio presentation and real-world static deployment.
+Professional, beginner-friendly frontend project built for portfolio presentation and real-world Vercel deployment.
 
 Repository: https://github.com/Jithendranageswarareddy/aptimaster_quiz_app
 
 ## Project Overview
-AptiMaster is a modular aptitude learning platform built with HTML, CSS, and vanilla JavaScript. It supports dynamic quiz generation through OpenRouter, timer-based quiz sessions, score analytics, result dashboards, and attempt history using localStorage.
+AptiMaster is a modular aptitude learning platform built with HTML, CSS, and vanilla JavaScript. It supports secure AI quiz generation through a Vercel serverless function backed by OpenRouter, timer-based quiz sessions, score analytics, result dashboards, and attempt history using localStorage.
 
 The codebase is intentionally structured to be easy for beginners to understand while following industry-style separation of concerns.
 
 ## Features
 - Clean responsive multi-page UI: Home, Quiz, Result
 - Dark mode toggle with persistent theme preference
-- Dynamic quiz generation using OpenRouter API
+- Dynamic quiz generation through `/api/generate-quiz`
 - Ready practice recovery if AI generation is unavailable
 - Quiz engine with previous/next navigation and no-skip answer rule
 - Countdown timer with pause/reset and auto-submit on timeout
@@ -29,7 +29,7 @@ The codebase is intentionally structured to be easy for beginners to understand 
 - HTML5
 - CSS3 (modular architecture)
 - JavaScript ES Modules (vanilla)
-- OpenRouter Chat Completions API
+- OpenRouter Chat Completions API via Vercel serverless functions
 - LocalStorage for client-side persistence
 
 ## Folder Structure
@@ -70,19 +70,22 @@ Example using Live Server:
 ```
 
 ## OpenRouter API Configuration
-Runtime configuration is centralized in `js/core/runtimeConfig.js`.
+Runtime configuration is centralized in `api/generate-quiz.js` for server-side usage and `js/core/runtimeConfig.js` for browser-safe settings.
 
-For a personal static deployment, place your OpenRouter key in `APP_CONFIG.OPENROUTER_API_KEY` before deploying. The product UI stays focused on practice; configuration remains inside the codebase.
+Set `OPENROUTER_API_KEY` as a Vercel environment variable. The key is only read inside the serverless function and is never exposed to browser JavaScript.
 
 ## Deployment (Vercel)
-This project is static and does not require a build step.
+This project is a static frontend plus one Vercel serverless API route. No build step is required.
 
 1. Push code to GitHub.
 2. Import repository in Vercel.
 3. Framework preset: Other.
 4. Build Command: leave empty.
 5. Output Directory: leave empty.
-6. Deploy.
+6. Add environment variable `OPENROUTER_API_KEY` in the Vercel project settings.
+7. Deploy.
+
+The deployed quiz page calls `/api/generate-quiz`, which works on the production Vercel domain without CORS configuration.
 
 Vercel configuration is already included in vercel.json.
 

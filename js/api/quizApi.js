@@ -3,8 +3,8 @@
 */
 
 import { MOCK_QUESTIONS } from '../data/mockQuestions.js';
-import { generateQuestionsFromOpenRouter } from './openrouter.js';
 import { normalizeCategoryTopicSelection } from '../services/topicService.js';
+import { getAppConfig } from '../core/runtimeConfig.js';
 
 const PRACTICE_TEMPLATES = [
   {
@@ -41,6 +41,37 @@ const PRACTICE_TEMPLATES = [
     answer: () => 'Identify the key relationship',
     explanation: (topicLabel) =>
       `A ${topicLabel} question is easier when you first identify what the values or words are trying to show.`
+  },
+  {
+    question: (topicLabel, index) =>
+      `A ${topicLabel} question asks for the difference between ${60 + index} and ${45 + index}. What is the difference?`,
+    options: (index) => [`${10 + index}`, `${12 + index}`, `${15 + index}`, `${18 + index}`],
+    answer: (index) => `${15 + index}`,
+    explanation: (topicLabel, index) =>
+      `Subtract the smaller value from the larger one: ${60 + index} - ${45 + index} = ${15 + index}.`
+  },
+  {
+    question: (topicLabel, index) =>
+      `A ${topicLabel} item costs ${20 + index * 3}. What is 10% of that value?`,
+    options: (index) => [`${1 + index}`, `${2 + index}`, `${3 + index}`, `${4 + index}`],
+    answer: (index) => `${2 + index}`,
+    explanation: (topicLabel, index) =>
+      `Ten percent means divide by 10: ${20 + index * 3} / 10 is closest to ${2 + index}.`
+  },
+  {
+    question: (topicLabel, index) =>
+      `Two ${topicLabel} workers complete a task in ${6 + index} hours and ${9 + index} hours. Which value is the faster completion time?`,
+    options: (index) => [`${5 + index}`, `${6 + index}`, `${7 + index}`, `${8 + index}`],
+    answer: (index) => `${6 + index}`,
+    explanation: (topicLabel, index) =>
+      `A smaller time means a faster completion, so ${6 + index} hours is the better choice.`
+  },
+  {
+    question: (topicLabel, index) =>
+      `A ${topicLabel} series goes 3, 6, 12, 24, ?. What comes next?`,
+    options: (index) => [`${40 + index}`, `${42 + index}`, `${44 + index}`, `${48 + index}`],
+    answer: (index) => `${48 + index}`,
+    explanation: () => 'The sequence doubles each time: 3, 6, 12, 24, 48.'
   }
 ];
 
@@ -106,8 +137,34 @@ export async function fetchMockQuestions(setup = {}) {
 }
 
 export async function fetchQuestions(setup = {}) {
-  // Dynamic source: OpenRouter AI question generation.
-  return generateQuestionsFromOpenRouter(setup);
+  const response = await fetch('/api/generate-quiz', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      category: setup.category || 'mixed',
+      topic: setup.topic || '',
+      difficulty: setup.difficulty || 'medium',
+      questionCount: Math.min(Number(setup.questionCount) || 10, getAppConfig().MAX_QUESTIONS)
+    })
+  });
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const error = new Error(payload?.error || 'Question generation failed.');
+    error.code = payload?.code || 'QUIZ_API_ERROR';
+    throw error;
+  }
+
+  if (!payload || !Array.isArray(payload.questions)) {
+    const error = new Error('Quiz API returned an invalid response.');
+    error.code = 'QUIZ_API_INVALID_RESPONSE';
+    throw error;
+  }
+
+  return payload;
 }
 
 export async function submitAnswers(payload) {

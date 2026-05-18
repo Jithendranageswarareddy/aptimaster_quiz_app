@@ -4,7 +4,7 @@
   This module keeps the category/topic structure centralized so:
   - the UI can populate dropdowns dynamically,
   - the quiz generator can validate category-topic combinations,
-  - and mock/OpenRouter question generation can stay topic-aware.
+  - and mock/API question generation can stay topic-aware.
 */
 
 import { QUANTITATIVE_TOPICS } from '../data/quantitativeTopics.js';

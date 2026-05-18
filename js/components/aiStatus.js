@@ -5,7 +5,8 @@
 
 const SOURCE_LABELS = {
   ai: 'AI Practice',
-  mock: 'Practice Ready'
+  mock: 'Practice Ready',
+  fallback: 'Practice Ready'
 };
 
 export function renderAiStatus(source = 'ai', message = '') {
@@ -14,7 +15,7 @@ export function renderAiStatus(source = 'ai', message = '') {
   return `
     <div class="ai-status ai-status--${source === 'mock' ? 'mock' : 'ai'}" role="status" aria-live="polite">
       <span class="ai-status__pill">${label}</span>
-      ${message ? `<p class="ai-status__message">A fresh practice set is ready.</p>` : ''}
+      ${message ? `<p class="ai-status__message">${message}</p>` : ''}
     </div>
   `;
 }

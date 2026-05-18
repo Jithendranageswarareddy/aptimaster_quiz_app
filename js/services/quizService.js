@@ -55,7 +55,7 @@ function setActiveQuestionSource(source, fallbackMessage = '') {
 }
 
 export async function getQuizQuestions(setup, options = {}) {
-  const source = options.source || 'openrouter';
+  const source = options.source || 'api';
 
   if (source === 'mock') {
     setActiveQuestionSource('mock');
@@ -63,49 +63,39 @@ export async function getQuizQuestions(setup, options = {}) {
   }
 
   try {
-    const questions = await fetchQuestions(setup);
+    const apiResult = await fetchQuestions(setup);
+    const questions = Array.isArray(apiResult) ? apiResult : apiResult.questions;
+    const responseSource = Array.isArray(apiResult) ? 'ai' : apiResult.source || 'ai';
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error('Quiz API returned no questions.');
+    }
+
+    if (responseSource === 'fallback') {
+      setActiveQuestionSource('mock', apiResult.fallbackMessage || AI_FALLBACK_MESSAGE);
+      return questions;
+    }
+
     setActiveQuestionSource('ai');
     saveAiQuestionCache(setup, questions);
     return questions;
   } catch (error) {
-    // Safe fallback for deployed environments where no API key is configured.
-    if (error?.code === 'MISSING_OPENROUTER_API_KEY') {
-      console.warn('[AptiMaster AI] Fallback activated: missing OpenRouter API key.');
-      setActiveQuestionSource('mock', AI_FALLBACK_MESSAGE);
-      return fetchMockQuestions(setup);
-    }
-
-    if (
-      [
-        'OPENROUTER_INVALID_JSON',
-        'OPENROUTER_EMPTY_RESPONSE',
-        'OPENROUTER_INVALID_QUESTION_SCHEMA',
-        'OPENROUTER_TIMEOUT',
-        'OPENROUTER_NETWORK_ERROR',
-        'OPENROUTER_HTTP_ERROR',
-        'OPENROUTER_RATE_LIMIT',
-        'OPENROUTER_RETRY_LIMIT_EXCEEDED'
-      ].includes(error?.code)
-    ) {
-      const cachedAiQuestions = readAiQuestionCache(setup);
-      if (cachedAiQuestions.length > 0) {
-        console.warn('[AptiMaster AI] Using cached AI questions after OpenRouter failure.', {
-          code: error?.code,
-          cachedQuestions: cachedAiQuestions.length
-        });
-        setActiveQuestionSource('ai');
-        return cachedAiQuestions;
-      }
-
-      console.warn('[AptiMaster AI] Fallback activated after AI generation failure.', {
+    const cachedAiQuestions = readAiQuestionCache(setup);
+    if (cachedAiQuestions.length > 0) {
+      console.warn('[AptiMaster AI] Using cached AI questions after API failure.', {
         code: error?.code,
-        message: error?.message
+        cachedQuestions: cachedAiQuestions.length
       });
-      setActiveQuestionSource('mock', 'A fresh practice set is ready.');
-      return fetchMockQuestions(setup);
+      setActiveQuestionSource('ai');
+      return cachedAiQuestions;
     }
 
-    throw error;
+    console.warn('[AptiMaster AI] Fallback activated after API failure.', {
+      code: error?.code,
+      message: error?.message
+    });
+    setActiveQuestionSource('mock', AI_FALLBACK_MESSAGE);
+    return fetchMockQuestions(setup);
   }
 }
 
