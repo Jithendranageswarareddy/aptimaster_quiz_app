@@ -1,0 +1,10 @@
+{
+  "name": "aptimaster-quiz-app",
+  "version": "1.0.0",
+  "description": "AI-powered aptitude quiz platform with secure serverless generation",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "ISC",
+  "private": true
+}

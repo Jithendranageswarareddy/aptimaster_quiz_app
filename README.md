@@ -77,15 +77,23 @@ Set `OPENROUTER_API_KEY` as a Vercel environment variable. The key is only read 
 ## Deployment (Vercel)
 This project is a static frontend plus one Vercel serverless API route. No build step is required.
 
+**Vercel Configuration:**
 1. Push code to GitHub.
 2. Import repository in Vercel.
 3. Framework preset: Other.
 4. Build Command: leave empty.
 5. Output Directory: leave empty.
-6. Add environment variable `OPENROUTER_API_KEY` in the Vercel project settings.
-7. Deploy.
+6. Add the environment variable `OPENROUTER_API_KEY` in Vercel Project Settings.
 
-The deployed quiz page calls `/api/generate-quiz`, which works on the production Vercel domain without CORS configuration.
+**Before Deploying:**
+Ensure these files exist and are correct:
+- `vercel.json` with `"runtime": "nodejs20"` (not `nodejs20.x`)
+- `package.json` with Node.js engine specification
+- `api/generate-quiz.js` serverless function
+- `.env.example` with OpenRouter key placeholder
+
+**After Deployment:**
+The quiz page calls `/api/generate-quiz` on the production Vercel domain. No CORS configuration is required for same-origin requests.
 
 Vercel configuration is already included in vercel.json.
 
