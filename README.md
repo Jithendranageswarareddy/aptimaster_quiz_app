@@ -96,6 +96,38 @@ Ensure these files exist and are correct:
 The quiz page calls `/api/generate-quiz` on the production Vercel domain. No CORS configuration is required for same-origin requests.
 
 Vercel configuration is already included in vercel.json.
+## Debugging AI Quiz Generation
+
+If the quiz always shows "Offline Practice Mode" instead of "AI Practice Mode", follow these steps:
+
+**Quick Verification:**
+1. Open `verify-ai-generation.html` in a browser (it's in the project root)
+2. Run the interactive tests to check deployment health
+3. If Test 2 shows "AI Practice Mode", generation is working ✓
+4. If Test 2 shows "Offline Practice Mode", check Vercel logs
+
+**Comprehensive Debugging:**
+See `DEBUGGING_GUIDE.md` for:
+- How to access Vercel serverless logs
+- Understanding log formats and timestamps
+- Common issues and solutions (API key, timeouts, parsing errors)
+- Browser debugging (Network tab, localStorage)
+- Request ID tracking for troubleshooting
+
+**Post-Deployment Testing:**
+See `VALIDATION_CHECKLIST.md` for:
+- Step-by-step verification after deployment
+- Environment variable configuration
+- Live site testing procedures
+- Performance baseline expectations
+- Sign-off checklist for production readiness
+
+**Key Files:**
+- `api/generate-quiz.js` — Serverless function with detailed logging
+- `DEBUGGING_GUIDE.md` — Comprehensive troubleshooting reference
+- `VALIDATION_CHECKLIST.md` — Testing and verification steps
+- `IMPLEMENTATION_SUMMARY.md` — Technical overview of debugging improvements
+- `verify-ai-generation.html` — Interactive testing tool
 
 ## Beginner Notes
 - Start from js/pages for page-level behavior.
