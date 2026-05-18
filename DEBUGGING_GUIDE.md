@@ -1,4 +1,4 @@
-# AptiMaster AI Quiz Generation - Debugging Guide
+﻿# AptiMaster AI Quiz Generation - Debugging Guide
 
 ## Overview
 
@@ -238,7 +238,7 @@ localStorage.getItem('aptimaster_ai_fallback_message');
 **Failure Pattern (to fix):**
 ```
 [HANDLER] Starting request
-[HANDLER] OPENROUTER_API_KEY not set → FALLBACK
+[HANDLER] OPENROUTER_API_KEY not set â†’ FALLBACK
 ```
 
 **Retry Pattern:**
@@ -279,7 +279,7 @@ This shows:
 
 ### Rotating API Keys
 1. Generate new key on [openrouter.ai](https://openrouter.ai)
-2. Update in Vercel Project Settings → Environment Variables
+2. Update in Vercel Project Settings â†’ Environment Variables
 3. Redeploy
 4. Test with new key
 5. Delete old key from OpenRouter
