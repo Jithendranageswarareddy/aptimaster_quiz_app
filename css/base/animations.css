@@ -1,0 +1,29 @@
+/*
+  Purpose: Shared motion utilities and reduced-motion safety.
+*/
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main,
+.card,
+.timer {
+  animation: fadeUp 0.45s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

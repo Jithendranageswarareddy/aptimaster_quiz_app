@@ -1,0 +1,17 @@
+{
+  "name": "aptimaster-quiz-app",
+  "title": "AptiMaster - AI-Powered Aptitude Platform",
+  "version": "1.0.0",
+  "description": "A professional, beginner-friendly AI-powered aptitude learning platform built with HTML, CSS, and vanilla JavaScript.",
+  "author": "Jithendra Nageswara Reddy",
+  "repository": "https://github.com/Jithendranageswarareddy/aptimaster_quiz_app",
+  "license": "MIT",
+  "stack": ["HTML5", "CSS3", "JavaScript", "OpenRouter API"],
+  "deployment": {
+    "platform": "Vercel",
+    "type": "static",
+    "buildCommand": "",
+    "outputDirectory": ""
+  },
+  "pages": ["index.html", "pages/quiz.html", "pages/result.html"]
+}

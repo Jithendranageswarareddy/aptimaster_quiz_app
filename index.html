@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AptiMaster | AI-Powered Aptitude Practice</title>
+    <link rel="stylesheet" href="./css/main.css" />
+  </head>
+  <body class="home-page">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="navbar-wrap">
+      <nav class="navbar container" aria-label="Primary navigation">
+        <a class="brand" href="./index.html" aria-label="AptiMaster home">
+          <span class="brand__badge" aria-hidden="true">A</span>
+          <span class="brand__text">AptiMaster</span>
+        </a>
+
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#setup">Practice</a></li>
+          <li><a href="./pages/result.html">Results</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="container home-main" id="main-content">
+      <section class="hero" id="features">
+        <div class="hero__content">
+          <p class="hero__eyebrow">AI-Powered Aptitude Platform</p>
+          <h1>Prepare smarter for aptitude assessments.</h1>
+          <p class="hero__description">
+            Strengthen quantitative, logical, and verbal skills with focused AI-generated
+            practice sessions, timed drills, and clear performance insights.
+          </p>
+          <div class="hero__stats" aria-label="Platform highlights">
+            <span><strong>3</strong> skill tracks</span>
+            <span><strong>AI</strong> question generation</span>
+            <span><strong>Timed</strong> sessions</span>
+          </div>
+          <div class="inline-actions">
+            <a class="btn" href="#setup">Start Practice</a>
+            <a class="btn btn-secondary" href="./pages/result.html">View Dashboard</a>
+          </div>
+        </div>
+        <aside class="hero-panel" aria-label="Practice workflow preview">
+          <p class="hero-panel__label">Today's Focus</p>
+          <h2>Your focused practice sprint</h2>
+          <ul>
+            <li>Choose a topic and difficulty</li>
+            <li>Practice with fresh aptitude questions</li>
+            <li>Review progress after every session</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="setup-card" id="setup">
+        <div class="setup-card__header">
+          <div>
+            <p class="section-eyebrow">Practice Setup</p>
+            <h2>Build your next practice session</h2>
+          </div>
+          <p class="setup-card__subtitle">
+            Choose a skill area, topic, difficulty, and session size. AptiMaster prepares
+            a focused session that matches your current practice goal.
+          </p>
+        </div>
+
+        <form id="quiz-setup-form" class="setup-form" aria-label="Quiz setup form">
+          <fieldset class="choice-group">
+            <legend>Skill area</legend>
+            <div class="category-grid">
+              <label class="category-option">
+                <input type="radio" name="category" value="quantitative" checked />
+                <span>
+                  <strong>Quantitative</strong>
+                  <small>Numbers, arithmetic, speed math</small>
+                </span>
+              </label>
+              <label class="category-option">
+                <input type="radio" name="category" value="logical" />
+                <span>
+                  <strong>Logical</strong>
+                  <small>Patterns, series, reasoning</small>
+                </span>
+              </label>
+              <label class="category-option">
+                <input type="radio" name="category" value="verbal" />
+                <span>
+                  <strong>Verbal</strong>
+                  <small>Grammar, vocabulary, comprehension</small>
+                </span>
+              </label>
+              <label class="category-option">
+                <input type="radio" name="category" value="mixed" />
+                <span>
+                  <strong>Mixed</strong>
+                  <small>All skill tracks in one session</small>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="form-grid">
+            <div class="form-field form-field--topic">
+              <label for="topic">Topic</label>
+              <select id="topic" name="topic" required disabled aria-describedby="topic-help">
+                <option value="">Select a category first</option>
+              </select>
+              <p id="topic-help" class="form-field__help">
+                Topics update automatically based on the category you choose.
+              </p>
+            </div>
+
+            <div class="form-field">
+              <label for="difficulty">Difficulty</label>
+              <select id="difficulty" name="difficulty" required>
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+          </div>
+
+          <fieldset class="choice-group">
+            <legend>Session size</legend>
+            <div class="question-count-grid" role="radiogroup" aria-label="Number of questions">
+              <label class="count-option">
+                <input type="radio" name="questionCount" value="5" />
+                <span>5</span>
+              </label>
+              <label class="count-option">
+                <input type="radio" name="questionCount" value="10" checked />
+                <span>10</span>
+              </label>
+              <label class="count-option">
+                <input type="radio" name="questionCount" value="15" />
+                <span>15</span>
+              </label>
+              <label class="count-option">
+                <input type="radio" name="questionCount" value="20" />
+                <span>20</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="setup-form__footer">
+            <button class="btn setup-form__submit" type="submit" aria-label="Start AI-powered quiz">
+              Generate Practice Quiz
+            </button>
+            <p class="setup-form__note">Your recent attempts stay available for quick progress review.</p>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

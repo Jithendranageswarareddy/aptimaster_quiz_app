@@ -1,0 +1,61 @@
+/*
+  Purpose: Reusable timer component styling.
+*/
+
+.timer {
+  min-width: 250px;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+}
+
+.timer__content {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.timer__label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.timer__value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.timer__actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.timer__actions .btn {
+  min-height: 36px;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.9rem;
+}
+
+.timer--warning {
+  border-color: rgba(245, 158, 11, 0.8);
+  box-shadow: 0 14px 28px rgba(245, 158, 11, 0.24);
+}
+
+.timer--warning .timer__value {
+  color: #b54708;
+}
+
+@media (max-width: 700px) {
+  .timer {
+    width: 100%;
+    min-width: 0;
+  }
+}

@@ -1,0 +1,12 @@
+/*
+  Purpose: Card container style for quiz/result panels.
+*/
+
+.card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--space-3);
+  margin-top: var(--space-2);
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AptiMaster | Quiz</title>
+    <!-- Reuse same CSS architecture across all pages -->
+    <link rel="stylesheet" href="../css/main.css" />
+  </head>
+  <body class="quiz-page">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <main class="container" id="main-content" aria-label="Quiz page main content">
+      <header class="quiz-page__header">
+        <div>
+          <p class="section-eyebrow">Practice Session</p>
+          <h1>Aptitude Sprint</h1>
+        </div>
+        <section id="timer-root" aria-label="Quiz timer"></section>
+      </header>
+
+      <section id="session-meta-root" aria-label="Practice session details"></section>
+      <section id="ai-status-root" aria-label="Practice status"></section>
+
+      <section id="quiz-root" class="card" aria-label="Quiz question container">
+      </section>
+
+      <nav class="inline-actions">
+        <a class="btn btn-secondary" href="../index.html">Back Home</a>
+        <a class="btn" href="./result.html">View Results</a>
+      </nav>
+    </main>
+
+    <script type="module" src="../js/main.js"></script>
+  </body>
+</html>
