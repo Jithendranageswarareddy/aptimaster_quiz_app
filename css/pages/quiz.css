@@ -38,17 +38,18 @@
 
 .ai-status {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.5rem;
   margin: 0.5rem 0 0.8rem;
   padding: 0.55rem 0.75rem;
   border-radius: 12px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
 }
 
 .ai-status__pill {
-  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -57,12 +58,31 @@
   border-radius: 999px;
   color: var(--primary);
   background: color-mix(in srgb, var(--primary) 12%, transparent);
+  width: fit-content;
+}
+
+.ai-status__description {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-left: 0.5rem;
 }
 
 .ai-status__message {
   margin: 0;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.ai-status--offline {
+  border-color: color-mix(in srgb, #ff9500 50%, var(--border));
+  background: color-mix(in srgb, #ff9500 8%, var(--surface-elevated) 88%, transparent);
+}
+
+.ai-status--offline .ai-status__pill {
+  color: #ff9500;
+  background: color-mix(in srgb, #ff9500 16%, transparent);
 }
 
 .ai-status--mock {

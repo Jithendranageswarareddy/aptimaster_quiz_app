@@ -1,9 +1,29 @@
 const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_MODEL = 'deepseek/deepseek-v4-flash:free';
-const REQUEST_TIMEOUT_MS = 30000;
-const RETRY_LIMIT = 2;
+const REQUEST_TIMEOUT_MS = 45000;
+const RETRY_LIMIT = 3;
+const RETRY_DELAY_MS = 1000;
 const MAX_QUESTIONS = 20;
 const FALLBACK_MESSAGE = 'A fresh practice set is ready.';
+const DEBUG_MODE = true;
+
+function maskApiKey(apiKey) {
+  if (!apiKey || apiKey.length < 8) return '***';
+  return `${apiKey.slice(0, 12)}...${apiKey.slice(-4)}`;
+}
+
+function log(label, message, data = null) {
+  if (!DEBUG_MODE) return;
+  const timestamp = new Date().toISOString();
+  const payload = data ? ` | ${JSON.stringify(data)}` : '';
+  console.log(`[${timestamp}] [${label}] ${message}${payload}`);
+}
+
+function logError(label, message, error = null) {
+  const timestamp = new Date().toISOString();
+  const errorPayload = error ? ` | ${error.message || String(error)}` : '';
+  console.error(`[${timestamp}] [${label}] ${message}${errorPayload}`);
+}
 
 function sendJson(res, statusCode, payload) {
   res.status(statusCode).setHeader('Content-Type', 'application/json');
@@ -240,20 +260,40 @@ function buildFallbackQuestions(setup) {
   const topicLabel = normalizeText(setup.topic) || 'Mixed Practice';
   const difficulty = normalizeText(setup.difficulty) || 'medium';
   const questionCount = Math.max(1, Math.min(Number(setup.questionCount) || 10, MAX_QUESTIONS));
+  const randomSeed = Math.floor(Math.random() * 10000);
 
-  return Array.from({ length: questionCount }, (_, index) => ({
-    id: index + 1,
-    category,
-    topic: normalizeText(setup.topic),
-    difficulty,
-    ...buildFallbackQuestion(topicLabel, difficulty, index)
-  }));
+  const questions = [];
+  for (let index = 0; index < questionCount; index += 1) {
+    const seedValue = randomSeed + index;
+    const templateIndex = seedValue % 8;
+    questions.push({
+      id: index + 1,
+      category,
+      topic: normalizeText(setup.topic),
+      difficulty,
+      ...buildFallbackQuestion(topicLabel, difficulty, seedValue)
+    });
+  }
+
+  return questions;
+}
 }
 
 async function callOpenRouter(setup, apiKey) {
   const questionCount = Math.max(1, Math.min(Number(setup.questionCount) || 10, MAX_QUESTIONS));
+  
+  log('OPENROUTER', 'Starting OpenRouter request', {
+    model: OPENROUTER_MODEL,
+    endpoint: OPENROUTER_ENDPOINT,
+    apiKeyPresent: !!apiKey,
+    apiKeyMasked: maskApiKey(apiKey),
+    questionCount,
+    timeout: REQUEST_TIMEOUT_MS
+  });
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  
   const body = {
     model: OPENROUTER_MODEL,
     messages: [
@@ -268,58 +308,114 @@ async function callOpenRouter(setup, apiKey) {
       }
     ],
     temperature: 0.1,
-    max_tokens: 3600,
+    max_tokens: 4000,
     response_format: buildResponseSchema(questionCount)
   };
 
   try {
+    log('OPENROUTER', 'Sending HTTP POST request to OpenRouter', {
+      url: OPENROUTER_ENDPOINT,
+      model: OPENROUTER_MODEL,
+      maxTokens: body.max_tokens
+    });
+
     const response = await fetch(OPENROUTER_ENDPOINT, {
       method: 'POST',
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://vercel.app',
+        Authorization: `Bearer ${maskApiKey(apiKey)}`,
+        'HTTP-Referer': 'https://aptimaster.vercel.app',
         'X-Title': 'AptiMaster'
       },
       body: JSON.stringify(body)
     });
 
+    log('OPENROUTER', 'HTTP response received', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
     if (!response.ok) {
       const errorText = await response.text();
-      const error = new Error(`OpenRouter request failed (${response.status}): ${errorText}`);
+      logError('OPENROUTER', `HTTP error (${response.status})`, new Error(errorText));
+      const error = new Error(`OpenRouter HTTP ${response.status}: ${errorText.slice(0, 200)}`);
       error.code = response.status === 429 ? 'OPENROUTER_RATE_LIMIT' : 'OPENROUTER_HTTP_ERROR';
+      error.statusCode = response.status;
       throw error;
     }
 
+    log('OPENROUTER', 'Parsing JSON response');
     const payload = await response.json();
+    
+    log('OPENROUTER', 'Raw payload received', {
+      hasChoices: !!payload.choices,
+      choicesLength: payload.choices?.length,
+      hasMessage: !!payload.choices?.[0]?.message,
+      hasContent: !!payload.choices?.[0]?.message?.content
+    });
+
     const content = payload?.choices?.[0]?.message?.content;
 
     if (!content) {
+      logError('OPENROUTER', 'No content in response', new Error('choices[0].message.content missing'));
       throw new Error('OpenRouter response did not contain question content.');
     }
 
-    const parsed = JSON.parse(cleanModelContent(content));
+    log('OPENROUTER', 'Content received', {
+      contentLength: content.length,
+      contentPreview: content.slice(0, 100)
+    });
+
+    const cleanedContent = cleanModelContent(content);
+    log('OPENROUTER', 'Cleaned content', {
+      cleanedLength: cleanedContent.length,
+      cleanedPreview: cleanedContent.slice(0, 100)
+    });
+
+    const parsed = JSON.parse(cleanedContent);
+    log('OPENROUTER', 'JSON parsed successfully', {
+      isArray: Array.isArray(parsed),
+      itemCount: Array.isArray(parsed) ? parsed.length : 'n/a'
+    });
+
     const questions = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.questions) ? parsed.questions : null;
 
     if (!questions) {
+      logError('OPENROUTER', 'Invalid question payload structure');
       throw new Error('OpenRouter returned an invalid question payload.');
     }
 
-    return validateQuestionSet(questions, questionCount).map((question, index) => ({
+    log('OPENROUTER', 'Validating question set', { questionCount: questions.length, expectedCount: questionCount });
+    const validated = validateQuestionSet(questions, questionCount);
+    
+    log('OPENROUTER', 'All questions validated successfully', { count: validated.length });
+
+    return validated.map((question, index) => ({
       id: index + 1,
       category: normalizeText(setup.category) || 'mixed',
       topic: normalizeText(setup.topic),
       difficulty: normalizeText(setup.difficulty) || 'medium',
       ...question
     }));
+  } catch (error) {
+    logError('OPENROUTER', `Request failed: ${error.message}`, error);
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }
 }
 
 module.exports = async function generateQuiz(req, res) {
+  const requestId = Math.random().toString(36).slice(2, 10);
+  log('HANDLER', `[${requestId}] Incoming request`, {
+    method: req.method,
+    path: req.url
+  });
+
   if (req.method !== 'POST') {
+    logError('HANDLER', `[${requestId}] Invalid HTTP method: ${req.method}`);
     sendJson(res, 405, { error: 'Method not allowed.', code: 'METHOD_NOT_ALLOWED' });
     return;
   }
@@ -327,7 +423,9 @@ module.exports = async function generateQuiz(req, res) {
   let body = {};
   try {
     body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
+    log('HANDLER', `[${requestId}] Request body parsed`, body);
   } catch (error) {
+    logError('HANDLER', `[${requestId}] Failed to parse request body`, error);
     sendJson(res, 400, { error: 'Invalid JSON request body.', code: 'INVALID_REQUEST_BODY' });
     return;
   }
@@ -340,10 +438,19 @@ module.exports = async function generateQuiz(req, res) {
     questionCount: Math.max(1, Math.min(Number(body.questionCount) || 10, MAX_QUESTIONS))
   };
 
+  log('HANDLER', `[${requestId}] Quiz setup`, setup);
+  log('HANDLER', `[${requestId}] API key status`, {
+    keyPresent: !!apiKey,
+    keyMasked: maskApiKey(apiKey)
+  });
+
   if (!apiKey) {
+    logError('HANDLER', `[${requestId}] OPENROUTER_API_KEY environment variable not set or empty`);
+    log('HANDLER', `[${requestId}] Triggering fallback due to missing API key`);
     sendJson(res, 200, {
       source: 'fallback',
       fallbackMessage: FALLBACK_MESSAGE,
+      fallbackReason: 'API_KEY_NOT_CONFIGURED',
       questions: buildFallbackQuestions(setup)
     });
     return;
@@ -353,7 +460,9 @@ module.exports = async function generateQuiz(req, res) {
 
   for (let attempt = 0; attempt <= RETRY_LIMIT; attempt += 1) {
     try {
+      log('HANDLER', `[${requestId}] Attempt ${attempt + 1}/${RETRY_LIMIT + 1}`);
       const questions = await callOpenRouter(setup, apiKey);
+      log('HANDLER', `[${requestId}] SUCCESS: OpenRouter returned ${questions.length} questions`);
       sendJson(res, 200, {
         source: 'ai',
         questions
@@ -361,13 +470,23 @@ module.exports = async function generateQuiz(req, res) {
       return;
     } catch (error) {
       lastError = error;
+      logError('HANDLER', `[${requestId}] Attempt ${attempt + 1} failed`, error);
+      
+      if (attempt < RETRY_LIMIT) {
+        const delayMs = RETRY_DELAY_MS * (attempt + 1);
+        log('HANDLER', `[${requestId}] Waiting ${delayMs}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
     }
   }
 
+  logError('HANDLER', `[${requestId}] All ${RETRY_LIMIT + 1} attempts exhausted, triggering fallback`);
+  log('HANDLER', `[${requestId}] Last error:`, lastError ? lastError.message : 'unknown');
   sendJson(res, 200, {
     source: 'fallback',
     fallbackMessage: FALLBACK_MESSAGE,
-    questions: buildFallbackQuestions(setup),
-    error: lastError ? lastError.message : 'OpenRouter request failed.'
+    fallbackReason: 'OPENROUTER_FAILED_ALL_RETRIES',
+    lastError: lastError ? lastError.message : 'OpenRouter request failed.',
+    questions: buildFallbackQuestions(setup)
   });
 };
