@@ -91,6 +91,28 @@ function createTopicPracticeQuestion(category, topic, difficulty, index) {
   };
 }
 
+function createSeededRandom(seed) {
+  let state = seed % 2147483647;
+  if (state <= 0) state += 2147483646;
+
+  return function nextRandom() {
+    state = (state * 16807) % 2147483647;
+    return (state - 1) / 2147483646;
+  };
+}
+
+function shuffleQuestions(items, seed) {
+  const random = createSeededRandom(seed);
+  const output = [...items];
+
+  for (let index = output.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [output[index], output[swapIndex]] = [output[swapIndex], output[index]];
+  }
+
+  return output;
+}
+
 export async function fetchMockQuestions(setup = {}) {
   const { category = 'mixed', topic = '', difficulty = 'medium', questionCount = 10 } = setup;
 
@@ -125,7 +147,7 @@ export async function fetchMockQuestions(setup = {}) {
 
   // If the local pool is too small, synthesize topic-aware practice questions.
   const requestedCount = Number(questionCount);
-  const seededQuestions = selectedPool.slice(0, requestedCount);
+  const seededQuestions = shuffleQuestions(selectedPool, Date.now() + requestedCount).slice(0, requestedCount);
 
   while (seededQuestions.length < requestedCount) {
     seededQuestions.push(
@@ -137,34 +159,51 @@ export async function fetchMockQuestions(setup = {}) {
 }
 
 export async function fetchQuestions(setup = {}) {
-  const response = await fetch('/api/generate-quiz', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      category: setup.category || 'mixed',
-      topic: setup.topic || '',
-      difficulty: setup.difficulty || 'medium',
-      questionCount: Math.min(Number(setup.questionCount) || 10, getAppConfig().MAX_QUESTIONS)
-    })
-  });
+  const appConfig = getAppConfig();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), appConfig.API_TIMEOUT);
 
-  const payload = await response.json().catch(() => null);
+  try {
+    const response = await fetch('/api/generate-quiz', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        category: setup.category || 'mixed',
+        topic: setup.topic || '',
+        difficulty: setup.difficulty || 'medium',
+        questionCount: Math.min(Number(setup.questionCount) || 10, appConfig.MAX_QUESTIONS)
+      })
+    });
 
-  if (!response.ok) {
-    const error = new Error(payload?.error || 'Question generation failed.');
-    error.code = payload?.code || 'QUIZ_API_ERROR';
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const error = new Error(payload?.error || 'Question generation failed.');
+      error.code = payload?.code || 'QUIZ_API_ERROR';
+      throw error;
+    }
+
+    if (!payload || !Array.isArray(payload.questions)) {
+      const error = new Error('Quiz API returned an invalid response.');
+      error.code = 'QUIZ_API_INVALID_RESPONSE';
+      throw error;
+    }
+
+    return payload;
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      const timeoutError = new Error('Quiz API request timed out.');
+      timeoutError.code = 'QUIZ_API_TIMEOUT';
+      throw timeoutError;
+    }
+
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  if (!payload || !Array.isArray(payload.questions)) {
-    const error = new Error('Quiz API returned an invalid response.');
-    error.code = 'QUIZ_API_INVALID_RESPONSE';
-    throw error;
-  }
-
-  return payload;
 }
 
 export async function submitAnswers(payload) {

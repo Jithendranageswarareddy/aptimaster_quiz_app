@@ -34,6 +34,7 @@ export async function initQuizPage() {
 
   let questions = [];
   let activeSource = getQuestionSourcePreference();
+  let preQuizActionsBound = false;
 
   // Show loading state while API generates questions.
   renderLoadingState(
@@ -279,6 +280,9 @@ export async function initQuizPage() {
   }
 
   function attachPreQuizActionHandlers() {
+    if (preQuizActionsBound) return;
+    preQuizActionsBound = true;
+
     root.addEventListener(
       'click',
       async (event) => {

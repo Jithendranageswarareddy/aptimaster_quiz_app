@@ -5,7 +5,7 @@ const RETRY_LIMIT = 3;
 const RETRY_DELAY_MS = 1000;
 const MAX_QUESTIONS = 20;
 const FALLBACK_MESSAGE = 'A fresh practice set is ready.';
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 function maskApiKey(apiKey) {
   if (!apiKey || apiKey.length < 8) return '***';
@@ -189,7 +189,7 @@ function buildResponseSchema(questionCount) {
   };
 }
 
-function buildFallbackQuestion(topicLabel, difficulty, index) {
+function buildFallbackQuestion(topicLabel, difficulty, index, templateIndex) {
   const templates = [
     () => {
       const first = 12 + index;
@@ -252,7 +252,7 @@ function buildFallbackQuestion(topicLabel, difficulty, index) {
     }
   ];
 
-  return templates[index % templates.length]();
+  return templates[templateIndex % templates.length]();
 }
 
 function buildFallbackQuestions(setup) {
@@ -271,12 +271,11 @@ function buildFallbackQuestions(setup) {
       category,
       topic: normalizeText(setup.topic),
       difficulty,
-      ...buildFallbackQuestion(topicLabel, difficulty, seedValue)
+      ...buildFallbackQuestion(topicLabel, difficulty, index, templateIndex)
     });
   }
 
   return questions;
-}
 }
 
 async function callOpenRouter(setup, apiKey) {
@@ -324,7 +323,7 @@ async function callOpenRouter(setup, apiKey) {
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${maskApiKey(apiKey)}`,
+        Authorization: `Bearer ${apiKey}`,
         'HTTP-Referer': 'https://aptimaster.vercel.app',
         'X-Title': 'AptiMaster'
       },
