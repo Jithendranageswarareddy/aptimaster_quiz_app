@@ -24,4 +24,5 @@ coverage/
 # Misc
 *.tmp
 *.temp
+.vercel/
 .vercel

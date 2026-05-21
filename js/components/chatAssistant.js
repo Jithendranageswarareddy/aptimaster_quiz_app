@@ -30,7 +30,7 @@ function renderMessages(messages, isLoading) {
   if (!messages.length && !isLoading) {
     return `
       <div class="chat-assistant__empty">
-        <p>Ask about this question, the answer, the shortcut, or the underlying concept.</p>
+        <p>Ask for a shortcut, a step-by-step solution, or why the correct answer works.</p>
       </div>
     `;
   }
@@ -39,9 +39,9 @@ function renderMessages(messages, isLoading) {
     .map((message) => {
       const roleClass = message.role === 'assistant' ? 'chat-message--assistant' : 'chat-message--user';
       return `
-        <article class="chat-message ${roleClass}">
+        <article class="chat-message ${roleClass} chat-message--fade-in">
           <span class="chat-message__role">${message.role === 'assistant' ? 'AptiMaster Tutor' : 'You'}</span>
-          <p class="chat-message__content">${escapeHtml(message.content)}</p>
+          <div class="chat-message__content">${formatMessageContent(message.content)}</div>
         </article>
       `;
     })
@@ -59,6 +59,36 @@ function renderMessages(messages, isLoading) {
     : '';
 
   return `${messageHtml}${typingHtml}`;
+}
+
+function formatMessageContent(content) {
+  const text = normalizeText(content);
+  if (!text) return '';
+
+  const blocks = text.replace(/\r\n/g, '\n').split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
+
+  return blocks
+    .map((block) => {
+      const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+      const listItems = lines.filter((line) => /^[-*•]\s+/.test(line));
+
+      if (listItems.length === lines.length && listItems.length > 0) {
+        return `
+          <ul class="chat-message__list">
+            ${listItems
+              .map((line) => `<li>${highlightFinalAnswer(escapeHtml(line.replace(/^[-*•]\s+/, '')))}</li>`)
+              .join('')}
+          </ul>
+        `;
+      }
+
+      return `<p>${highlightFinalAnswer(escapeHtml(lines.join(' ')))}</p>`;
+    })
+    .join('');
+}
+
+function highlightFinalAnswer(content) {
+  return content.replace(/(Final answer:\s*)([^<\n]+)/i, '<strong class="chat-message__answer">$1$2</strong>');
 }
 
 function renderQuickPrompts(prompts) {
@@ -81,7 +111,8 @@ function createEmptyState() {
     draft: '',
     isLoading: false,
     error: '',
-    suggestedFollowUps: []
+    suggestedFollowUps: [],
+    requestId: 0
   };
 }
 
@@ -89,6 +120,13 @@ export function mountChatAssistant(rootElement, initialQuestionContext = null) {
   const state = createEmptyState();
 
   function setQuestionContext(questionContext) {
+    const nextKey = questionContext ? buildChatSessionKey(questionContext) : '';
+
+    if (state.sessionKey === nextKey && state.questionContext) {
+      state.questionContext = questionContext;
+      return;
+    }
+
     state.questionContext = questionContext;
     state.sessionKey = questionContext ? buildChatSessionKey(questionContext) : '';
     const storedThread = questionContext ? loadChatThread(questionContext) : { messages: [] };
@@ -97,6 +135,7 @@ export function mountChatAssistant(rootElement, initialQuestionContext = null) {
     state.isLoading = false;
     state.error = '';
     state.suggestedFollowUps = [];
+    state.requestId += 1;
     render();
   }
 
@@ -105,27 +144,30 @@ export function mountChatAssistant(rootElement, initialQuestionContext = null) {
     saveChatThread(state.questionContext, state.messages);
   }
 
-  function appendMessage(role, content) {
-    state.messages = [...state.messages, { role, content: normalizeText(content) }].slice(-12);
-    persistThread();
-    render();
-  }
-
   async function submitMessage(messageText) {
     const trimmedMessage = normalizeText(messageText);
     if (!trimmedMessage || !state.questionContext) return;
 
+    const requestId = state.requestId + 1;
+    state.requestId = requestId;
+    const requestKey = state.sessionKey;
+    const historyBeforeSubmission = state.messages;
+    const pendingMessages = [...historyBeforeSubmission, { role: 'user', content: trimmedMessage }].slice(-12);
+
     state.error = '';
     state.isLoading = true;
     state.draft = '';
-    appendMessage('user', trimmedMessage);
+    state.messages = pendingMessages;
+    persistThread();
+    render();
 
     try {
-      const response = await sendChatAssistantMessage(state.questionContext, trimmedMessage, state.messages);
-      state.messages = [
-        ...state.messages,
-        { role: 'assistant', content: response.reply }
-      ].slice(-12);
+      const response = await sendChatAssistantMessage(state.questionContext, trimmedMessage, historyBeforeSubmission);
+      if (state.requestId !== requestId || state.sessionKey !== requestKey) {
+        return;
+      }
+
+      state.messages = [...state.messages, { role: 'assistant', content: response.reply }].slice(-12);
       state.suggestedFollowUps = Array.isArray(response.suggestedFollowUps) ? response.suggestedFollowUps : [];
       persistThread();
       state.isLoading = false;
@@ -133,17 +175,19 @@ export function mountChatAssistant(rootElement, initialQuestionContext = null) {
       state.error = '';
       render();
     } catch (error) {
+      if (state.requestId !== requestId || state.sessionKey !== requestKey) {
+        return;
+      }
+
       const fallbackReply = 'I could not reach the tutor right now. Try again in a moment, or ask for a simpler step-by-step explanation.';
-      state.messages = [
-        ...state.messages,
-        { role: 'assistant', content: fallbackReply }
-      ].slice(-12);
+      state.messages = [...state.messages, { role: 'assistant', content: fallbackReply }].slice(-12);
       state.isLoading = false;
       state.error = error?.message || 'Chat assistant is unavailable.';
       state.suggestedFollowUps = [
-        'Explain it step-by-step',
-        'Show a shortcut method',
-        'Why is the correct option right?'
+        'Need a shortcut?',
+        'Want step-by-step solving?',
+        'Ask why other options are incorrect',
+        'Show a common mistake'
       ];
       persistThread();
       render();
@@ -158,20 +202,28 @@ export function mountChatAssistant(rootElement, initialQuestionContext = null) {
     state.isLoading = false;
     state.error = '';
     state.suggestedFollowUps = [];
+    state.requestId += 1;
     render();
   }
 
   function render() {
     const quickPrompts = getQuickPrompts(state.questionContext);
+    const starterPrompts = [
+      'Explain this question',
+      'Give shortcut method',
+      'Why is this answer correct?',
+      'Solve step-by-step'
+    ];
     const promptChips = state.suggestedFollowUps.length ? state.suggestedFollowUps : quickPrompts;
+    const emptyStatePrompts = !state.messages.length ? starterPrompts : promptChips;
 
     rootElement.innerHTML = `
       <section class="chat-assistant card">
         <header class="chat-assistant__header">
           <div>
             <p class="section-eyebrow">AI Tutor</p>
-            <h2>Question Discussion Assistant</h2>
-            <p class="chat-assistant__subtitle">Ask follow-up doubts, shortcuts, or step-by-step explanations for the active quiz question.</p>
+            <h2>AptiMaster Tutor</h2>
+            <p class="chat-assistant__subtitle">Placement-style explanations, shortcuts, and follow-up guidance for the active question.</p>
           </div>
           <button type="button" class="btn btn-secondary chat-assistant__reset" data-chat-action="reset" ${state.questionContext ? '' : 'disabled'}>
             Clear Chat
@@ -187,7 +239,7 @@ export function mountChatAssistant(rootElement, initialQuestionContext = null) {
         </div>
 
         <div class="chat-assistant__prompts" aria-label="Quick prompts">
-          ${renderQuickPrompts(promptChips)}
+          ${renderQuickPrompts(emptyStatePrompts)}
         </div>
 
         <form class="chat-assistant__form" data-chat-form>
@@ -196,12 +248,12 @@ export function mountChatAssistant(rootElement, initialQuestionContext = null) {
             id="chat-assistant-input"
             class="chat-assistant__input"
             rows="3"
-            placeholder="Ask about the current question, a shortcut, or a follow-up doubt..."
+            placeholder="Ask for a shortcut, a step-by-step solution, or why an option is wrong..."
             ${state.questionContext ? '' : 'disabled'}
           >${escapeHtml(state.draft)}</textarea>
           <div class="chat-assistant__actions">
             <p class="chat-assistant__status ${state.error ? 'chat-assistant__status--error' : ''}">
-              ${state.error ? escapeHtml(state.error) : state.isLoading ? 'Thinking...' : 'Shift+Enter for a new line. Enter sends your question.'}
+              ${state.error ? escapeHtml(state.error) : state.isLoading ? 'Thinking...' : 'Enter sends. Shift+Enter adds a new line.'}
             </p>
             <button type="submit" class="btn chat-assistant__send" ${state.questionContext && !state.isLoading ? '' : 'disabled'}>
               ${state.isLoading ? 'Sending...' : 'Send'}
@@ -229,6 +281,12 @@ export function mountChatAssistant(rootElement, initialQuestionContext = null) {
           }
         }
       });
+
+      if (!state.isLoading) {
+        requestAnimationFrame(() => {
+          textarea.focus({ preventScroll: true });
+        });
+      }
     }
 
     if (form) {
@@ -253,6 +311,13 @@ export function mountChatAssistant(rootElement, initialQuestionContext = null) {
           textarea.focus();
         }
       });
+    });
+
+    requestAnimationFrame(() => {
+      const messagesRoot = rootElement.querySelector('.chat-assistant__messages');
+      if (messagesRoot) {
+        messagesRoot.scrollTo({ top: messagesRoot.scrollHeight, behavior: 'smooth' });
+      }
     });
   }
 

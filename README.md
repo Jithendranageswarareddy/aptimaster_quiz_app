@@ -1,50 +1,69 @@
 # AptiMaster
 
-AptiMaster is a lightweight aptitude practice platform built with HTML, CSS, and vanilla JavaScript. It uses a Vercel serverless function to generate AI questions securely through OpenRouter, while keeping the frontend simple, modular, and interview-friendly.
+AptiMaster is a lightweight aptitude practice platform built with HTML, CSS, and vanilla JavaScript. It pairs AI-generated quiz sessions with a secure serverless backend and an in-browser AI tutor, while keeping the codebase modular, readable, and interview-ready.
+
+## Project Overview
+The platform helps users practice aptitude topics, review results, and ask follow-up questions on the active quiz item. It is designed to feel production-ready without introducing frameworks or unnecessary dependencies.
 
 ## Features
-- AI-generated quiz sessions with secure server-side API access
+- AI-generated quiz sessions with secure server-side OpenRouter access
 - AI question discussion assistant for step-by-step explanations and follow-up doubts
+- Per-question conversational memory with fallback tutoring responses
 - Category, topic, difficulty, and session-size selection
-- Timer, previous/next navigation, and progress tracking
-- Result analysis with answer review and history
-- Responsive layout and dark mode
-- Graceful fallback when AI generation is unavailable
+- Quiz timer, previous/next navigation, and progress tracking
+- Result analysis with answer review and practice history
+- Responsive layout, dark mode, and graceful fallback handling
 
 ## Architecture
-- Frontend: `index.html`, `pages/`, `css/`, `js/`
-- API: `api/generate-quiz.js`, `api/chat-assistant.js`
-- Deployment: Vercel serverless functions + static hosting
-- Configuration: `package.json`, `.gitignore`, `.env.example`
+- Frontend shell: `index.html`, `pages/`, `css/`, `js/`
+- Quiz generation API: `api/generate-quiz.js`
+- Tutor API: `api/chat-assistant.js`
+- Client state: small page controllers plus localStorage-backed services
+- Deployment target: Vercel static hosting with Node serverless functions
 
-## Topics
-- Quantitative Aptitude: Percentages, Profit and Loss, Time and Work, Averages, Ratio and Proportion, Number Systems, and more
-- Logical Reasoning: Blood Relations, Coding-Decoding, Puzzles, Direction Sense, Number Series, and more
-- Verbal Ability: Synonyms, Antonyms, Fill in the Blanks, Reading Comprehension, Sentence Correction, and more
-- Mixed Practice: Dynamically combines topic coverage across categories
+## Tech Stack
+- HTML5
+- CSS3
+- Vanilla JavaScript modules
+- Vercel serverless functions
+- OpenRouter API
+
+## Core Flows
+- Quiz generation requests are sent to the serverless quiz API and fall back to local practice sets when needed.
+- The tutor uses question-scoped memory so follow-up questions stay tied to the current quiz item.
+- Results and practice history are stored locally for quick reuse without a backend database.
+- Dark mode and responsive behavior are handled entirely in the frontend styles.
+
+## AI Tutor
+The AI tutor is designed for interview-style learning. It explains the active question, shows shortcuts when helpful, and keeps responses scoped to the current question context so memory does not leak across quiz items.
 
 ## Local Setup
 1. Clone the repository.
 2. Open the project in VS Code.
-3. Use a static server such as Live Server for the frontend.
-4. Ensure Node.js 18+ is available if you want to run the Vercel function locally.
+3. Use a static server or Vercel dev for local testing.
+4. Ensure Node.js 18+ is available if you want to run the serverless functions locally.
 
 ## Environment Variables
 Set this only in Vercel Project Settings:
 - `OPENROUTER_API_KEY`
 
-The API key must not be stored in frontend code, runtime config, or local storage.
+The API key must never be stored in frontend code, runtime config, or local storage.
 
-## Vercel Deployment
+## Deployment
 1. Push the cleaned repository to GitHub.
 2. Import the repository into Vercel.
-3. Use the default static + serverless setup.
+3. Let Vercel serve the static frontend and `api/` functions.
 4. Add `OPENROUTER_API_KEY` in Vercel Environment Variables.
 
 No build command is required for the current architecture.
 
 ## Screenshots
-Add screenshots or short GIFs here after deployment.
+Add a short homepage, quiz, tutor, and result screenshot set here after deployment.
+
+## Interview Notes
+- Demonstrates secure client/server separation for AI usage
+- Shows modular vanilla-JS architecture without framework overhead
+- Covers real-world concerns like fallback handling, state persistence, and UX stability
 
 ## Future Improvements
 - Add automated tests for core quiz logic

@@ -46,13 +46,13 @@ export function buildChatSessionKey(questionContext) {
 }
 
 export function getQuickPrompts(questionContext) {
-  const topicLabel = normalizeText(questionContext?.topicLabel || questionContext?.topic || 'this question');
+  normalizeText(questionContext?.topicLabel || questionContext?.topic || 'this question');
 
   return [
-    `Explain ${topicLabel} step-by-step`,
-    'Why is the correct option right?',
-    'Give me a shortcut method',
-    'Explain it in simpler words'
+    'Explain this question',
+    'Give shortcut method',
+    'Why is this answer correct?',
+    'Solve step-by-step'
   ];
 }
 
@@ -125,11 +125,12 @@ export function buildFallbackChatReply(questionContext, latestMessage) {
 
   return {
     source: 'fallback',
-    reply,
+    reply: `Final answer: ${answer}\n\n${reply}`,
     suggestedFollowUps: [
-      'Explain it step-by-step',
-      'Show a shortcut method',
-      'Why is this option wrong?'
+      'Need a shortcut?',
+      'Want step-by-step solving?',
+      'Ask why other options are incorrect',
+      'Show a common mistake'
     ]
   };
 }
@@ -220,7 +221,7 @@ export async function sendChatAssistantMessage(questionContext, latestMessage, h
         source: responseData.source === 'ai' ? 'ai' : 'fallback',
         reply: normalizeText(responseData.reply),
         suggestedFollowUps: Array.isArray(responseData.suggestedFollowUps)
-          ? responseData.suggestedFollowUps.map((item) => normalizeText(item)).filter(Boolean).slice(0, 3)
+          ? responseData.suggestedFollowUps.map((item) => normalizeText(item)).filter(Boolean).slice(0, 4)
           : []
       };
     } catch (error) {

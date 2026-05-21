@@ -89,8 +89,8 @@ function buildResponseSchema() {
           reply: { type: 'string', minLength: 1 },
           suggestedFollowUps: {
             type: 'array',
-            minItems: 3,
-            maxItems: 3,
+            minItems: 4,
+            maxItems: 4,
             items: { type: 'string', minLength: 1 }
           }
         }
@@ -114,11 +114,15 @@ Goals:
 
 Style rules:
 - Be concise, clear, and educational.
-- Use simple language.
+- Use simple language and short paragraphs.
 - Avoid generic chatbot behavior.
 - Do not invent facts that are not supported by the question context.
 - If the user asks something unrelated, gently redirect to the active aptitude question.
 - Mention the correct answer only when it helps learning.
+- Use bullet points when they improve readability.
+- If relevant, end with a short "Final answer:" line.
+- Explain why other options are wrong when asked.
+- Prefer a tutor tone over a chatbot tone.
 
 Current question context:
 ${JSON.stringify({ setup, question, questionMeta }, null, 2)}
@@ -132,7 +136,7 @@ ${latestMessage}
 Return valid JSON only with this shape:
 {
   "reply": "string",
-  "suggestedFollowUps": ["string", "string", "string"]
+  "suggestedFollowUps": ["string", "string", "string", "string"]
 }`;
 }
 
@@ -147,16 +151,17 @@ function buildFallbackReply(payload) {
     source: 'fallback',
     reply: [
       `Let’s focus on ${topic}.`,
-      `The correct answer is ${answer}.`,
+      `Final answer: ${answer}.`,
       explanation,
-      latestMessage ? 'If you want, ask me for a shorter explanation, a shortcut, or why another option is wrong.' : ''
+      latestMessage ? 'Try asking for a shortcut, a simpler explanation, or why the other options are incorrect.' : ''
     ]
       .filter(Boolean)
-      .join(' '),
+      .join('\n\n'),
     suggestedFollowUps: [
-      'Explain it step-by-step',
-      'Show a shortcut method',
-      'Why are the other options wrong?'
+      'Need a shortcut?',
+      'Want step-by-step solving?',
+      'Ask why other options are incorrect',
+      'Show a common mistake'
     ]
   };
 }
@@ -198,7 +203,7 @@ async function callOpenRouter(payload, apiKey) {
       {
         role: 'system',
         content:
-          'You are a strict JSON-only aptitude tutor. Never answer outside aptitude learning. Keep explanations educational, clear, and brief when possible.'
+          'You are a strict JSON-only aptitude tutor for AptiMaster. Stay focused on aptitude learning, use a warm teaching tone, explain step-by-step when needed, and keep answers concise but useful. Never answer unrelated questions.'
       },
       {
         role: 'user',
@@ -253,7 +258,7 @@ async function callOpenRouter(payload, apiKey) {
     return {
       source: 'ai',
       reply: normalizeText(parsed.reply),
-      suggestedFollowUps: parsed.suggestedFollowUps.map((item) => normalizeText(item)).filter(Boolean).slice(0, 3)
+      suggestedFollowUps: parsed.suggestedFollowUps.map((item) => normalizeText(item)).filter(Boolean).slice(0, 4)
     };
   } finally {
     clearTimeout(timeoutId);

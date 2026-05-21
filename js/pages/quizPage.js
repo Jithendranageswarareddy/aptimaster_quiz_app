@@ -15,6 +15,7 @@ import { renderAiStatus } from '../components/aiStatus.js';
 import { mountChatAssistant } from '../components/chatAssistant.js';
 import { safeReadStorage } from '../core/runtimeConfig.js';
 import { getTopicPromptLabel, normalizeCategoryTopicSelection } from '../services/topicService.js';
+import { buildChatSessionKey } from '../services/chatService.js';
 
 const CATEGORY_LABELS = {
   quantitative: 'Quantitative',
@@ -38,6 +39,7 @@ export async function initQuizPage() {
   let activeSource = getQuestionSourcePreference();
   let preQuizActionsBound = false;
   let chatAssistant = null;
+  let lastChatAssistantContextKey = '';
 
   // Show loading state while API generates questions.
   renderLoadingState(
@@ -239,7 +241,13 @@ export async function initQuizPage() {
   function syncChatAssistantContext() {
     if (!chatAssistant || typeof chatAssistant.setQuestionContext !== 'function') return;
 
-    chatAssistant.setQuestionContext(buildChatAssistantContext());
+    const chatContext = buildChatAssistantContext();
+    const nextKey = chatContext ? buildChatSessionKey(chatContext) : '';
+
+    if (nextKey === lastChatAssistantContextKey) return;
+
+    lastChatAssistantContextKey = nextKey;
+    chatAssistant.setQuestionContext(chatContext);
   }
 
   function renderAiStatusBanner() {
