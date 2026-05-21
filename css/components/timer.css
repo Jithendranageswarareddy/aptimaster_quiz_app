@@ -3,13 +3,17 @@
 */
 
 .timer {
-  min-width: 250px;
+  min-width: 160px;
   margin-top: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.75rem 0.9rem;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated) 96%, transparent);
+  box-shadow: 0 8px 20px rgba(16,24,40,0.04);
 }
 
 .timer__content {
@@ -25,23 +29,23 @@
   letter-spacing: 0.08em;
 }
 
+.timer__label {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 .timer__value {
-  font-size: 1.35rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--primary);
   line-height: 1;
 }
-
-.timer__actions {
-  display: flex;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-}
-
 .timer__actions .btn {
-  min-height: 36px;
-  padding: 0.45rem 0.65rem;
-  font-size: 0.9rem;
+  min-height: 32px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.86rem;
 }
 
 .timer--warning {

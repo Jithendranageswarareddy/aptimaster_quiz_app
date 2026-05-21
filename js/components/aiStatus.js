@@ -5,22 +5,24 @@
 
 const SOURCE_LABELS = {
   ai: 'AI Practice Mode',
-  mock: 'Offline Practice Mode',
-  fallback: 'Offline Practice Mode'
+  mock: 'Adaptive Practice Mode',
+  fallback: 'Adaptive Practice Mode'
 };
 
 const SOURCE_DESCRIPTIONS = {
   ai: 'AI-powered question generation',
-  mock: 'Randomized practice questions',
-  fallback: 'Randomized practice questions'
+  mock: 'Smart practice session',
+  fallback: 'Smart practice session'
 };
 
 export function renderAiStatus(source = 'ai', message = '') {
   const label = SOURCE_LABELS[source] || SOURCE_LABELS.ai;
   const description = SOURCE_DESCRIPTIONS[source] || '';
 
+  const variant = source === 'fallback' || source === 'mock' ? 'adaptive' : 'ai';
+
   return `
-    <div class="ai-status ai-status--${source === 'fallback' || source === 'mock' ? 'offline' : 'ai'}" role="status" aria-live="polite">
+    <div class="ai-status ai-status--${variant}" role="status" aria-live="polite">
       <span class="ai-status__pill">${label}</span>
       ${description ? `<span class="ai-status__description">${description}</span>` : ''}
       ${message ? `<p class="ai-status__message">${message}</p>` : ''}
