@@ -34,6 +34,11 @@
   box-shadow: none;
 }
 
+.btn--pressed {
+  transform: translateY(1px) scale(0.997);
+  transition: transform 120ms ease;
+}
+
 .btn:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
