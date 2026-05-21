@@ -101,6 +101,15 @@
   scroll-behavior: smooth;
 }
 
+/* Tighter message area on narrow viewports to reduce excessive scrolling */
+@media (max-width: 640px) {
+  .chat-assistant__messages {
+    max-height: 220px;
+    gap: 0.45rem;
+    padding-right: 0.25rem;
+  }
+}
+
 .chat-message {
   width: min(100%, 76ch);
   display: grid;
@@ -134,6 +143,13 @@
   color: var(--text);
   line-height: 1.45;
   white-space: normal;
+}
+
+/* Ensure long lines in chat wrap and avoid overflow */
+.chat-message__content,
+.chat-message__content p {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .chat-message__content p {
@@ -354,6 +370,27 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Make form sticky at bottom on small screens to keep input accessible above keyboard */
+@media (max-width: 700px) {
+  .chat-assistant__form {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-elevated) 96%, transparent), var(--surface-elevated));
+    padding: 0.6rem;
+    border-top: 1px solid var(--border);
+    z-index: 25;
+  }
+
+  .chat-assistant__input { min-height: 56px; }
+
+  .chat-assistant__send,
+  .chat-assistant__reset { min-height: 44px; }
+
+  /* Chips should wrap gracefully without forcing horizontal scroll */
+  .chat-assistant__prompts { gap: 0.4rem; }
+  .chat-assistant__chip { max-width: 48%; white-space: normal; }
 }
 
 [data-theme='dark'] .chat-assistant {

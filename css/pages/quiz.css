@@ -169,6 +169,13 @@
   line-height: 1.4;
 }
 
+/* Prevent long question text from overflowing on small screens */
+.quiz-card__question,
+.quiz-card__question p {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .quiz-card__options {
   display: grid;
   gap: 0.65rem;
@@ -185,6 +192,24 @@
   cursor: pointer;
   transition: border-color 200ms ease, transform 160ms ease, box-shadow 200ms ease, background 160ms ease;
   box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+}
+
+/* Touch-friendly sizing on small screens */
+@media (max-width: 640px) {
+  .option-btn {
+    padding: 0.9rem 1rem;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+  .quiz-card__options {
+    gap: 0.5rem;
+  }
+  .quiz-card__question {
+    font-size: clamp(1rem, 3.6vw, 1.12rem);
+  }
+  .quiz-progress {
+    height: 6px;
+  }
 }
 
 .option-btn:hover {
@@ -242,4 +267,18 @@
   .quiz-nav {
     flex-direction: column;
   }
+}
+
+/* Prevent horizontal overflow across quiz components */
+.quiz-page,
+.quiz-card,
+.quiz-card * {
+  box-sizing: border-box;
+}
+
+/* Ensure tap targets are comfortable and avoid accidental horizontal scroll */
+@media (max-width:420px) {
+  .session-badges { gap: 0.4rem; }
+  .session-badge { font-size: 0.78rem; padding: 0.28rem 0.6rem; }
+  .quiz-card { padding-left: 0.5rem; padding-right: 0.5rem; }
 }
