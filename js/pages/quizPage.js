@@ -12,6 +12,7 @@ import { saveQuizState, loadQuizState, clearQuizState } from '../core/stateManag
 import { createTimerEngine } from '../core/timerEngine.js';
 import { mountTimerUI, updateTimerUI } from '../components/timer.js';
 import { renderAiStatus } from '../components/aiStatus.js';
+import { mountChatAssistant } from '../components/chatAssistant.js';
 import { safeReadStorage } from '../core/runtimeConfig.js';
 import { getTopicPromptLabel, normalizeCategoryTopicSelection } from '../services/topicService.js';
 
@@ -27,6 +28,7 @@ export async function initQuizPage() {
   const timerRoot = byId('timer-root');
   const aiStatusRoot = byId('ai-status-root');
   const sessionMetaRoot = byId('session-meta-root');
+  const chatAssistantRoot = byId('chat-assistant-root');
   if (!root) return;
 
   // Read setup chosen on homepage. Fallback values make this page usable directly.
@@ -35,6 +37,7 @@ export async function initQuizPage() {
   let questions = [];
   let activeSource = getQuestionSourcePreference();
   let preQuizActionsBound = false;
+  let chatAssistant = null;
 
   // Show loading state while API generates questions.
   renderLoadingState(
@@ -69,6 +72,10 @@ export async function initQuizPage() {
   // Engine contains business logic. UI only calls engine functions.
   const engine = createQuizEngine(questions, savedQuizState);
   const sessionDurationInSeconds = getSessionDurationInSeconds(setup, questions.length);
+
+  if (chatAssistantRoot) {
+    chatAssistant = mountChatAssistant(chatAssistantRoot, buildChatAssistantContext());
+  }
 
   // Timer engine is separate from UI and quiz business logic.
   const timer = createTimerEngine({
@@ -225,6 +232,14 @@ export async function initQuizPage() {
       selectedOption,
       uiMessage
     );
+
+    syncChatAssistantContext();
+  }
+
+  function syncChatAssistantContext() {
+    if (!chatAssistant || typeof chatAssistant.setQuestionContext !== 'function') return;
+
+    chatAssistant.setQuestionContext(buildChatAssistantContext());
   }
 
   function renderAiStatusBanner() {
@@ -335,6 +350,25 @@ export async function initQuizPage() {
   function getQuestionSourcePreference() {
     const queryParams = new URLSearchParams(window.location.search);
     return queryParams.get('source') === 'practice' ? 'mock' : 'api';
+  }
+
+  function buildChatAssistantContext() {
+    const currentQuestion = engine.getCurrentQuestion();
+    const topicLabel = getTopicPromptLabel(setup.topic, setup.category);
+
+    if (!currentQuestion) {
+      return null;
+    }
+
+    return {
+      category: setup.category,
+      topic: setup.topic,
+      topicLabel,
+      difficulty: setup.difficulty,
+      questionIndex: engine.getSnapshot().currentQuestionIndex,
+      totalQuestions: questions.length,
+      question: currentQuestion
+    };
   }
 
   async function submitQuizAndRedirect() {

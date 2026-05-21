@@ -4,6 +4,7 @@ AptiMaster is a lightweight aptitude practice platform built with HTML, CSS, and
 
 ## Features
 - AI-generated quiz sessions with secure server-side API access
+- AI question discussion assistant for step-by-step explanations and follow-up doubts
 - Category, topic, difficulty, and session-size selection
 - Timer, previous/next navigation, and progress tracking
 - Result analysis with answer review and history
@@ -12,7 +13,7 @@ AptiMaster is a lightweight aptitude practice platform built with HTML, CSS, and
 
 ## Architecture
 - Frontend: `index.html`, `pages/`, `css/`, `js/`
-- API: `api/generate-quiz.js`
+- API: `api/generate-quiz.js`, `api/chat-assistant.js`
 - Deployment: Vercel serverless functions + static hosting
 - Configuration: `package.json`, `.gitignore`, `.env.example`
 
